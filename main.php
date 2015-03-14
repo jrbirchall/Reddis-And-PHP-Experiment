@@ -21,7 +21,10 @@ function main()
     
     // returns true;
     if (FALSE == $range->QueryRange(500, 800000))
+    {
         echo "Failed AddRange test.\r\n";
+        print_r($range->getRanges());
+    }
     
     // create a hole in the range
     $range->RemoveRange(550, 700000);
@@ -39,8 +42,10 @@ function main()
 
     // returns true
     if (FALSE == $range->QueryRange(500, 800000))
+    {
         echo "Failed Restore range test.\r\n";
-
+        print_r($range->getRanges());
+    }
 }
 
 main();

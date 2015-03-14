@@ -7,11 +7,15 @@ require __DIR__ . '/redisent/Redis.php';
 abstract class RangeModuleAbstract
 {
     protected $_redis = null;
+    protected $_range_id = null;
 
     public function __construct()
     {
         // creates redis connection localhost on port 6379
+        // Note:  This was incorrectly specified as 3679 on the on
+        //     the interview email.  Should probably fix that...
         $this->_redis = new redisent\Redis('localhost', 6379);
+        $this->_range_id = uniqid();
     }
 
     public function __destruct()

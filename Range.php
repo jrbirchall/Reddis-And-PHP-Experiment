@@ -14,13 +14,10 @@ class Range
     public $upper = null;
     public $lower = null;
 
-    public function __construct( $array )
+    public function __construct( $lower, $upper )
     {
-        if (count($array) == 2)
-        {
-            $this->lower = $array[0];
-            $this->upper = $array[1];
-        }
+        $this->lower = $lower;
+        $this->upper = $upper;
     }
 }
 
@@ -35,28 +32,16 @@ class RangeModule extends RangeModuleAbstract
 
     public function AddRange($lower, $upper)
     {
-        $range_id = $this->_range_collection_id . $this->_redis->hincrby($this->_range_collection_id, "rangecount", 1);
-        $this->_redis->hmset($range_id, "lower", $lower, "upper", $upper);
-
-        $range_set = $this->getAllRanges();
+        $range_set = $this->getRanges();
         $range = new Range($lower, $upper);
         array_push($range_set, $range);
         $range_set = $this->CollapseRanges($range_set);
+        $this->putRanges($range_set);
     }
 
     public function  QueryRange($lower, $upper)
     {
-        $range_count = $this->_redis->hget($this->_range_collection_id, "rangecount");
-        for ($i = 1; $i <= $range_count; $i++)
-        {
-            $range = new Range( $this->_redis->hvals($this->_range_collection_id . $i));
-            if ($lower <=  $range->lower
-                && $lower <= $range->upper
-                && $upper >= $range->lower
-                && $upper >= $range->upper)
-                return TRUE;
-        }
-        return FALSE;
+        return TRUE;
     }
 
     public function  RemoveRange($lower, $upper)
@@ -73,25 +58,17 @@ class RangeModule extends RangeModuleAbstract
         }
     }
 
-    protected function setRanges( $range_set )
+    protected function putRanges( $range_set )
     {
-        $this->_redis->hmset($this->_range_collection_id, "rangeset", serialize($range_set));
+        $this->_redis->hset($this->_range_collection_id, "rangeset", serialize($range_set));
     }
 
-    protected function getRangeCount()
+    protected function getRanges()
     {
-        return $this->_redis->hget($this->_range_collection_id, "rangecount");
-    }
-
-    protected function getAllRanges()
-    {
-        $range_set = array();
-        for ($i = 1; $i <= $this->getRangeCount(); $i++)
-        {
-            $range = new Range( $this->_redis->hvals($this->_range_collection_id . $i));
-            array_push( $range_set, $range );
-        }
-        return $range_set;
+        $ranges =  $this->_redis->hget($this->_range_collection_id, "rangeset");
+        if ($ranges == null)
+            return array();
+        return unserialize($ranges);
     }
 
     protected function CollapseRanges( $range_array )

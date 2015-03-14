@@ -35,27 +35,34 @@ class RangeModule extends RangeModuleAbstract
         $range_set = $this->getRanges();
         $range = new Range($lower, $upper);
         array_push($range_set, $range);
-        $range_set = $this->CollapseRanges($range_set);
+        $range_set = $this->UnionRanges($range_set);
         $this->putRanges($range_set);
     }
 
-    public function  QueryRange($lower, $upper)
+    public function QueryRange($lower, $upper)
     {
-        return TRUE;
+        $range_set = $this->getRanges();
+        for ($i=0; $i < count($range_set); $i++)
+        {
+            $range = $range_set[$i];
+            if ($range->lower <= $lower && $range->upper > $lower
+                && $range->upper >= $upper && $range->lower < $upper)
+                return TRUE;
+        }
+        return FALSE;
     }
 
-    public function  RemoveRange($lower, $upper)
+    public function RemoveRange($lower, $upper)
     {
-        //fill in...
+        $range_set = $this->getRanges();
+        $range_set = $this->excludeRange($range_set, $lower, $upper);
+        usort($range_set, "cmpRanges");
+        $this->putRanges($range_set);
     }
 
     public function dump()
     {
         print_r($this->_redis->hgetall($this->_range_collection_id));
-        for ($i = 1; $i <= $this->getRangeCount(); $i++)
-        {
-            print_r($this->_redis->hgetall($this->_range_collection_id . $i));
-        }
     }
 
     protected function putRanges( $range_set )
@@ -63,7 +70,7 @@ class RangeModule extends RangeModuleAbstract
         $this->_redis->hset($this->_range_collection_id, "rangeset", serialize($range_set));
     }
 
-    protected function getRanges()
+    public function getRanges()
     {
         $ranges =  $this->_redis->hget($this->_range_collection_id, "rangeset");
         if ($ranges == null)
@@ -71,7 +78,7 @@ class RangeModule extends RangeModuleAbstract
         return unserialize($ranges);
     }
 
-    protected function CollapseRanges( $range_array )
+    protected function UnionRanges( $range_array )
     {
         if (count( $range_array ) <= 1) 
             return $range_array;
@@ -109,4 +116,42 @@ class RangeModule extends RangeModuleAbstract
 
         return $range_out;
     }
+
+    protected function excludeRange($range_set, $lower, $upper)
+    {
+        $range_out = array();
+        for ($i=0; $i < count($range_set); $i++)
+        {
+            $range = $range_set[$i];
+            // full overlap
+            if ($range->lower <= $lower 
+                && $range->upper > $lower
+                && $range->lower <= $upper 
+                && $range->upper > $upper)
+            {
+                // Split the range into two.
+                $range_lower = new Range($range->lower, $lower);
+                $range_upper = new Range($upper, $range->upper);
+                $range = $range_lower;
+                array_push($range_out, $range_lower);
+                array_push($range_out, $range_upper);
+                continue;
+            }
+
+            // Overlap on the lower side.
+            if ($range->lower <= $lower && $range->upper > $lower)
+            {
+                $range->upper = $lower;
+            }
+
+            // Overlap on the upper side.
+            if ($range->lower <= $upper && $range->upper > $upper)
+            {
+                $range->lower = $upper;
+            }
+            array_push($range_out, $range);
+        }
+        return $range_out;
+    }
+
 }

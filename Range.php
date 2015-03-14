@@ -6,11 +6,13 @@ class RangeModule extends RangeModuleAbstract
 {
     public function AddRange($lower, $upper)
     {
-        $this->_redis->hmset($this->_range_id, "lower", $lower, "upper", $upper);
+        $range_id = uniqid();
+        $this->_redis->hmset($this->_range_id, $range_id . "_lower", $lower, $range_id . "_upper", $upper);
     }
 
     public function  QueryRange($lower, $upper)
     {
+        
     }
 
     public function  RemoveRange($lower, $upper)

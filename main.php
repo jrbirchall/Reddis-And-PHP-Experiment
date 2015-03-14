@@ -34,6 +34,8 @@ function main()
 
     // returns true
     $range->QueryRange(500, 800000);
+
+    $range->dump();
     
 }
 

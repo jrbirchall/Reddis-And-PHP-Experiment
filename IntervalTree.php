@@ -52,9 +52,9 @@ class IntervalTree
             return 0;
 
         $node = $this->_tree[$i];
-        $height_left = $this->height( $node->left );
-        $height_right = $tihs->height( $node->right );
-        return ($height_left > $height_right) ? $height_left + 1 : $height_right + 1;
+        $height_left = $this->height($node->left);
+        $height_right = $this->height($node->right);
+        return ($height_left > $height_right) ? ++$height_left : ++$height_right;
     }
 
     public function queryRange( $range, $i = 0 )

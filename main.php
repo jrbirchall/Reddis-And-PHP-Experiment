@@ -4,7 +4,7 @@
 //  main.php
 //  codescreen
 
-require __DIR__ . '/Range.php';
+require __DIR__ . '/RangeModule.php';
 
 function main()
 {

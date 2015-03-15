@@ -108,6 +108,19 @@ class IntervalTree
         }
     }
 
+    public function inorder( $i=0 )
+    {
+        if (FALSE == isset($this->_tree[$i]))
+            return array();
+
+        $a = array();
+        $node = $this->_tree[$i];
+        $a = array_merge($a, $this->inorder($node->left));
+        $a[] = $node->range;
+        $a = array_merge($a, $this->inorder($node->right));
+        return $a;
+    }
+
     protected function splitNode( $node, $range )
     {
         $new_range = new Range($range->lower, $node->range->lower);
